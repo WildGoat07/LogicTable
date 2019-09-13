@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LogicTable"
         mc:Ignorable="d"
-        Title="" Height="450" Width="800">
+        Title="" Height="450" Width="800" ResizeMode="NoResize">
     <Grid>
         <TextBlock Name="intro" Margin="10" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Center" />
         <TextBlock Name="helper" Margin="149,30,149,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Center" Width="494" Height="105" Padding="10" />

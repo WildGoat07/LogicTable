@@ -109,16 +109,24 @@ namespace LogicTable
 <head>
     <meta charset=""UTF-8"" />
     <style>
-        table,
-        th,
-        td {
-            border: 1px solid black;
-            padding: 5px;
-        }
+table,
+th,
+td {
+    border: 1px solid black;
+    padding: 5px;
+}
 
-        table {
-            border-collapse: collapse;
-        }
+table {
+    border-collapse: collapse;
+}
+.green {
+    color : white;
+    background-color : green;
+}
+.red {
+    color : white;
+    background-color : red;
+}
     </style>
     <title>" + Local[Language.FR]["tabTitle"] + "</title>" +
 @"
@@ -148,7 +156,7 @@ namespace LogicTable
             }
             registeredVars.Sort();
             var cases = new List<Dictionary<string, bool>>();
-            for (long i = 0; i < Math.Pow(2, registeredVars.Count); i++)
+            for (int i = 0; i < Math.Pow(2, registeredVars.Count); i++)
             {
                 var currCase = new Dictionary<string, bool>();
                 for (int j = registeredVars.Count - 1; j >= 0; j--)
@@ -157,32 +165,35 @@ namespace LogicTable
             }
             result.Append(
 @"
-            <tr>");
+            <tr>
+                <th></th>");
             foreach (var variable in registeredVars)
                 result.Append(
 @"
                 <th>" + variable + "</th>");
             var signature = getStr(globalEq);
-            signature = signature.Substring(1, signature.Length - 2);
             result.Append(
 @"
                 <th><em>" + signature +
 @"</em></th>
             </tr>");
-            foreach (var key in cases)
+            for (int i = 0; i < cases.Count; i++)
             {
+                var key = cases[i];
+                var value = globalEq.Test(key);
                 result.Append(
 @"
-            <tr>");
+            <tr>
+                <td><em>i" + i + "</em></td>");
                 foreach (var variable in key)
                 {
                     result.Append(
 @"
-                <td>" + (variable.Value ? Local[Language.FR]["true"] : Local[Language.FR]["false"]) + "</td>");
+                <td class=""" + (variable.Value ? "green" : "red") + "\">" + (variable.Value ? Local[Language.FR]["true"] : Local[Language.FR]["false"]) + "</td>");
                 }
                 result.Append(
 @"
-                <td>" + (globalEq.Test(key) ? Local[Language.FR]["true"] : Local[Language.FR]["false"]) + "</td>");
+                <td class=""" + (value ? "green" : "red") + "\">" + (value ? Local[Language.FR]["true"] : Local[Language.FR]["false"]) + "</td>");
                 result.Append(
 @"
             </tr>");
