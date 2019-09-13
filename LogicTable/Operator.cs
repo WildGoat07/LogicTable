@@ -32,23 +32,32 @@ namespace LogicTable
 
         public override bool Test(Dictionary<string, bool> keys)
         {
+            var left = Left.Test(keys);
+            var right = Right.Test(keys);
+            bool res;
             switch (Operator)
             {
                 case OperatorType.AND:
-                    return Left.Test(keys) && Right.Test(keys);
+                    res = left && right;
+                    break;
 
                 case OperatorType.OR:
-                    return Left.Test(keys) || Right.Test(keys);
+                    res = left || right;
+                    break;
 
                 case OperatorType.EQUIVALENT:
-                    return Left.Test(keys) == Right.Test(keys);
+                    res = Left.Test(keys) == Right.Test(keys);
+                    break;
 
                 case OperatorType.INVOLVING:
-                    return !Left.Test(keys) || Right.Test(keys);
+                    res = !Left.Test(keys) || Right.Test(keys);
+                    break;
 
                 default:
-                    return false;
+                    res = false;
+                    break;
             }
+            return res;
         }
 
         #endregion Public Methods

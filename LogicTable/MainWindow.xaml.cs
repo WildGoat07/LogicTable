@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -43,6 +45,32 @@ namespace LogicTable
 
         #region Public Methods
 
+        static public string getStr(Equation eq)
+        {
+            if (eq is Not neq)
+                return "!" + getStr(neq.InternalEquation);
+            if (eq is Constant c)
+                return c.Name;
+            if (eq is OperatorEquation oeq)
+            {
+                switch (oeq.Operator)
+                {
+                    case OperatorEquation.OperatorType.AND:
+                        return '(' + getStr(oeq.Left) + " & " + getStr(oeq.Right) + ')';
+
+                    case OperatorEquation.OperatorType.OR:
+                        return '(' + getStr(oeq.Left) + " | " + getStr(oeq.Right) + ')';
+
+                    case OperatorEquation.OperatorType.EQUIVALENT:
+                        return '(' + getStr(oeq.Left) + " 🡘 " + getStr(oeq.Right) + ')';
+
+                    case OperatorEquation.OperatorType.INVOLVING:
+                        return '(' + getStr(oeq.Left) + " → " + getStr(oeq.Right) + ')';
+                }
+            }
+            return "";
+        }
+
         public static void InitLocal()
         {
             Local = new Dictionary<Language, Dictionary<string, string>>();
@@ -70,170 +98,37 @@ namespace LogicTable
             }
         }
 
-        public UnparsedEq DivideStr(string eq, ref int index)
-        {
-            UnparsedEq result = new UnparsedEq();
-            result.str = "";
-            result.subEqs = new List<UnparsedEq>();
-            int nbSubEq = 0;
-            while (eq[index] != ')')
-            {
-                char current = eq[index];
-                if (current == '(')
-                {
-                    index++;
-                    result.str += "%" + nbSubEq.ToString("000");
-                    nbSubEq++;
-                    result.subEqs.Add(DivideStr(eq, ref index));
-                }
-                else
-                    result.str += current;
-                index++;
-            }
-            return result;
-        }
-
-        public string getStr(Equation eq)
-        {
-            if (eq is Not neq)
-                return "!" + getStr(neq.InternalEquation);
-            if (eq is Constant c)
-                return c.Name;
-            if (eq is OperatorEquation oeq)
-            {
-                switch (oeq.Operator)
-                {
-                    case OperatorEquation.OperatorType.AND:
-                        return '(' + getStr(oeq.Left) + ") && (" + getStr(oeq.Right) + ')';
-
-                    case OperatorEquation.OperatorType.OR:
-                        return '(' + getStr(oeq.Left) + ") || (" + getStr(oeq.Right) + ')';
-
-                    case OperatorEquation.OperatorType.EQUIVALENT:
-                        return '(' + getStr(oeq.Left) + ") <-> (" + getStr(oeq.Right) + ')';
-
-                    case OperatorEquation.OperatorType.INVOLVING:
-                        return '(' + getStr(oeq.Left) + ") -> (" + getStr(oeq.Right) + ')';
-                }
-            }
-            return "";
-        }
-
-        public Equation Parse(string str, UnparsedEq currentUnparsed, List<string> registeredVars)
-        {
-            int index = str.IndexOf("🡘");
-            if (index == -1)
-            {
-                index = str.IndexOf("→");
-                if (index == -1)
-                {
-                    index = str.IndexOf("|");
-                    if (index == -1)
-                    {
-                        index = str.IndexOf("&");
-                        if (index == -1)
-                        {
-                            index = 0;
-                            SkipBlank(str, ref index);
-                            if (str[index] == '!')
-                            {
-                                index++;
-                                var eq = new Not();
-                                eq.InternalEquation = Parse(str.Substring(index), currentUnparsed, registeredVars);
-                                return eq;
-                            }
-                            else if (char.IsLetter(str[index]))
-                            {
-                                var variableName = "";
-                                char currentChar = str[index];
-                                while (char.IsLetterOrDigit(currentChar) && index < str.Length)
-                                {
-                                    variableName += currentChar;
-                                    index++;
-                                    if (index < str.Length)
-                                        currentChar = str[index];
-                                }
-                                SkipBlank(str, ref index);
-                                if (index < str.Length)
-                                    throw new Exception("Unexpected char :" + str[index]);
-                                if (!registeredVars.Contains(variableName))
-                                    registeredVars.Add(variableName);
-                                var eq = new Constant();
-                                eq.Name = variableName;
-                                return eq;
-                            }
-                            else if (str[index] == '%')
-                            {
-                                var nbStr = str.Substring(index + 1, 3);
-                                index += 4;
-                                SkipBlank(str, ref index);
-                                if (index < str.Length)
-                                    throw new Exception("Unexpected char :" + str[index]);
-                                var nextUnparsed = currentUnparsed.subEqs[int.Parse(nbStr)];
-                                var eq = Parse(nextUnparsed.str, nextUnparsed, registeredVars);
-                                return eq;
-                            }
-                            else
-                                throw new Exception("wrong var starting char");
-                        }
-                        else
-                        {
-                            var strs = str.Split(new string[] { "&" }, 2, StringSplitOptions.None);
-                            var eq = new OperatorEquation();
-                            eq.Operator = OperatorEquation.OperatorType.AND;
-                            eq.Left = Parse(strs[0], currentUnparsed, registeredVars);
-                            eq.Right = Parse(strs[1], currentUnparsed, registeredVars);
-                            return eq;
-                        }
-                    }
-                    else
-                    {
-                        var strs = str.Split(new string[] { "|" }, 2, StringSplitOptions.None);
-                        var eq = new OperatorEquation();
-                        eq.Operator = OperatorEquation.OperatorType.OR;
-                        eq.Left = Parse(strs[0], currentUnparsed, registeredVars);
-                        eq.Right = Parse(strs[1], currentUnparsed, registeredVars);
-                        return eq;
-                    }
-                }
-                else
-                {
-                    var strs = str.Split(new string[] { "→" }, 2, StringSplitOptions.None);
-                    var eq = new OperatorEquation();
-                    eq.Operator = OperatorEquation.OperatorType.INVOLVING;
-                    eq.Left = Parse(strs[0], currentUnparsed, registeredVars);
-                    eq.Right = Parse(strs[1], currentUnparsed, registeredVars);
-                    return eq;
-                }
-            }
-            else
-            {
-                var strs = str.Split(new string[] { "🡘" }, 2, StringSplitOptions.None);
-                var eq = new OperatorEquation();
-                eq.Operator = OperatorEquation.OperatorType.EQUIVALENT;
-                eq.Left = Parse(strs[0], currentUnparsed, registeredVars);
-                eq.Right = Parse(strs[1], currentUnparsed, registeredVars);
-                return eq;
-            }
-        }
-
         public string ParseToHTML(string eq)
         {
-            string result =
+            eq = eq.Replace("🡘", "*");
+            var result = new StringBuilder();
+            result.Append(
 @"
 <!DOCTYPE HTML>
 <html>
 <head>
     <meta charset=""UTF-8"" />
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            padding: 5px;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+    </style>
     <title>" + Local[Language.FR]["tabTitle"] + "</title>" +
 @"
 </head>
 <body>
     <table>
-
-";
+        <tbody>");
             string footer =
 @"
+        </tbody>
     </table>
 </body>
 </html>
@@ -251,15 +146,49 @@ namespace LogicTable
                 error.Text = e.Message;
                 return null;
             }
-
-            return getStr(globalEq);
-        }
-
-        public void SkipBlank(string str, ref int index)
-        {
-            var blankChar = new char[] { ' ', '\n', '\t' };
-            while (index < str.Length && blankChar.Contains(str[index]))
-                index++;
+            registeredVars.Sort();
+            var cases = new List<Dictionary<string, bool>>();
+            for (long i = 0; i < Math.Pow(2, registeredVars.Count); i++)
+            {
+                var currCase = new Dictionary<string, bool>();
+                for (int j = registeredVars.Count - 1; j >= 0; j--)
+                    currCase.Add(registeredVars[registeredVars.Count - j - 1], (1 << j & i) == 0);
+                cases.Add(currCase);
+            }
+            result.Append(
+@"
+            <tr>");
+            foreach (var variable in registeredVars)
+                result.Append(
+@"
+                <th>" + variable + "</th>");
+            var signature = getStr(globalEq);
+            signature = signature.Substring(1, signature.Length - 2);
+            result.Append(
+@"
+                <th><em>" + signature +
+@"</em></th>
+            </tr>");
+            foreach (var key in cases)
+            {
+                result.Append(
+@"
+            <tr>");
+                foreach (var variable in key)
+                {
+                    result.Append(
+@"
+                <td>" + (variable.Value ? Local[Language.FR]["true"] : Local[Language.FR]["false"]) + "</td>");
+                }
+                result.Append(
+@"
+                <td>" + (globalEq.Test(key) ? Local[Language.FR]["true"] : Local[Language.FR]["false"]) + "</td>");
+                result.Append(
+@"
+            </tr>");
+            }
+            result.Append(footer);
+            return result.ToString();
         }
 
         #endregion Public Methods
@@ -269,7 +198,16 @@ namespace LogicTable
         private void GenerateButton_Click(object sender, RoutedEventArgs e)
         {
             error.Text = "";
-            Console.WriteLine(ParseToHTML(inputBox.Text + ")"));
+            var html = ParseToHTML(inputBox.Text + ")");
+            if (html == null)
+                return;
+            var tmpDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "logicTableTemp");
+            var tmpFile = System.IO.Path.Combine(tmpDir, "tmpGeneratedLogicTable.html");
+            Directory.CreateDirectory(tmpDir);
+            var sr = new StreamWriter(new FileStream(tmpFile, FileMode.Create));
+            sr.Write(html);
+            sr.Close();
+            Process.Start(tmpFile);
         }
 
         private void InputBox_TextChanged(object sender, TextChangedEventArgs e)

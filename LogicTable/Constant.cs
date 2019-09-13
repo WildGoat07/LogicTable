@@ -16,7 +16,11 @@ namespace LogicTable
 
         #region Public Methods
 
-        public override bool Test(Dictionary<string, bool> keys) => keys[Name];
+        public override bool Test(Dictionary<string, bool> keys)
+        {
+            var res = keys[Name];
+            return res;
+        }
 
         #endregion Public Methods
     }

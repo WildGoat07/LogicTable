@@ -16,7 +16,11 @@ namespace LogicTable
 
         #region Public Methods
 
-        public override bool Test(Dictionary<string, bool> keys) => !InternalEquation.Test(keys);
+        public override bool Test(Dictionary<string, bool> keys)
+        {
+            var res = !InternalEquation.Test(keys);
+            return res;
+        }
 
         #endregion Public Methods
     }
