@@ -10,5 +10,7 @@
         <TextBlock Name="intro" Margin="10" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Center" />
         <TextBlock Name="helper" Margin="149,30,149,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Center" Width="494" Height="105" Padding="10" />
         <TextBox Name="inputBox" Margin="150" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Center" AcceptsReturn="True" MinWidth="150" MaxWidth="600" TextChanged="InputBox_TextChanged" />
+        <Button Name="generateButton" HorizontalAlignment="Center" Margin="0,250,0,0" VerticalAlignment="Top" Height="25" Click="GenerateButton_Click" />
+        <TextBlock Name="error" Margin="149,0,149,10" TextWrapping="Wrap" HorizontalAlignment="Center" Width="494" Padding="10" Height="105" VerticalAlignment="Bottom" Foreground="Red" />
     </Grid>
 </Window>
